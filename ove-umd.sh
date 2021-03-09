@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 declare -r VERSION='0.0.1'
 
+# source the npm auth-token
+source ./.env
+
 # need this to delete files
 shopt -s extglob
 
@@ -10,27 +13,18 @@ OveUmdV=$(node -pe "require('./open-vector-editor-umd/package.json').version")
 # get the new version
 OveV=$(yarn info --silent open-vector-editor version)
 
-#
-function upgrade()
+function clean()
 {
-    if [[ "$OveUmdV" != "$OveV" ]]; then
-        yarn install --silent
-        # download the new version
-        yarn upgrade --silent
-        
-        # delete all old files
-        cd open-vector-editor-umd/
-        rm -f !('package.json'|'yarn.lock'|'readme.md')
-        cd ..
-
-        # copy only the umd files
-        cp node_modules/open-vector-editor/umd/* open-vector-editor-umd/
-    fi
+    # delete all old files
+    cd open-vector-editor-umd/
+    rm -f !('package.json'|'readme.md')
+    cd ..
 }
 
-function publish()
+function copy-umd-files()
 {
-    yarn publish open-vector-editor-umd --new-version $OveV --access public
+    # copy only the umd files
+    cp node_modules/open-vector-editor/umd/* open-vector-editor-umd/
 }
 
 function help()
@@ -42,11 +36,41 @@ function help()
 
     Commands:
 
+        copy-umd-files  copy OVE umd files from node_modules folder to open-vector-editor-umd
+        clean           delete open-vector-editor-umd files
         help            Show this text
         publish         publish the current version of open-vetor-editor-umd at npm
+        run             
         upgrade         get the latest version of open-vetor-editor from npm
         version         Display elabctl version
     "
+}
+
+function publish()
+{
+    # update version number
+    cd open-vector-editor-umd
+    npm version $OveV
+    cd ..
+    # and publsih
+    npm publish open-vector-editor-umd --access public --dry-run
+}
+
+function run()
+{
+    if [[ "$OveUmdV" != "$OveV" ]]; then
+        upgrade
+        publish
+    fi
+}
+
+function upgrade()
+{
+    # download the new version
+    yarn install --non-interactive --pure-lockfile
+
+    clean
+    copy-umd-files
 }
 
 function version()
@@ -54,7 +78,6 @@ function version()
     echo "© 2021 Marcel Bolten"
     echo "version: $VERSION"
 }
-
 
 # SCRIPT BEGIN
 
@@ -78,7 +101,7 @@ esac
 
 # available commands
 declare -A commands
-for valid in help publish upgrade version
+for valid in clean copy-umd-files help publish run upgrade version
 do
     commands[$valid]=1
 done

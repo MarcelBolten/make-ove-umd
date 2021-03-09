@@ -13,3 +13,10 @@ This is a little helper script to republish only the UMD files in a new package 
 
 The files are republish as they are without further testing.
 If you have problems with Open Vector Editor please seek help from the OVE developers at https://github.com/TeselaGen/openVectorEditor.
+
+# setup
+
+- download the git repository
+- rename `.env-example` to `.env`
+- replace "YOUR-TOKEN-GOES-HERE" with your actual token from npmjs.com
+- setup a cron job to execute `ove-umd.sh run` with the desired schedule
